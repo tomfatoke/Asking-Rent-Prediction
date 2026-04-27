@@ -132,14 +132,74 @@ ready dataset.
 | Asking_rent | float | Average asking rent in dollars |
 
 ### Silver Delta Table
-`projects.rent_project.silver_rent_clea
+`projects.rent_project.silver_rent_layer
+
+---
+
+## Gold Layer — Complete ✅
+The gold layer reads from the silver Delta table and produces a fully
+aggregated, analysis ready dataset with year over year rent change
+calculations. This is the layer that powers SQL analysis and Genie
+querying.
+
+### What Was Done
+
+**1. Read from Silver**
+- Read directly from the silver Delta table
+- Never touched bronze or the original CSV
+
+**2. Date Extraction**
+- Extracted Year and Month from Reference_Date
+- Dropped the full Reference_Date column after extraction
+- Discovered data is published quarterly by Statistics Canada:
+  - January, April, July, October each year
+
+**3. Aggregation**
+- Grouped by: Year, Month, City, Unit_type, Bedrooms
+- Calculated the following aggregations:
+  - avg_asking_rent  →  average asking rent rounded to 2 decimals
+  - max_asking_rent  →  highest rent in the group
+  - min_asking_rent  →  lowest rent in the group
+  - Total_listings   →  number of records in the group
+
+**4. Year Over Year Percentage Change**
+- Defined a Window partitioned by City, Unit_type, Bedrooms
+- Ordered by Year and Month within each partition
+- Used lag() with offset of 4 to look back one full year
+  (offset of 4 because data is quarterly — 4 quarters = 1 year)
+- Calculated YOY_pct_change:
+  ((current avg - previous avg) / previous avg) * 100
+- First year (2019) shows NULL for YOY — expected and correct
+  as there is no previous year to compare against
+
+### Final Gold Schema
+| Column | Data Type | Description |
+|---|---|---|
+| Year | integer | Year of the reference period |
+| Month | integer | Quarter month (1, 4, 7, 10) |
+| City | string | Cleaned city name |
+| Unit_type | string | Type of rental unit |
+| Bedrooms | string | Number of bedrooms |
+| avg_asking_rent | float | Average asking rent |
+| max_asking_rent | float | Maximum asking rent |
+| min_asking_rent | float | Minimum asking rent |
+| Total_listings | integer | Number of records in group |
+| prev_year_rent | float | Same quarter previous year rent |
+| YOY_pct_change | float | Year over year % change in rent |
+
+### Gold Delta Table
+`projects.rent_project.gold_rent_aggregated`
+- Total rows: 6,142
+
+---
+
 ## Current Status
 - [x] GitHub repository created
 - [x] Databricks Git folder connected
 - [x] Raw CSV uploaded to Databricks Volume
-- [x] Bronze layer complete — 8,188 rows ingested
-- [x] Silver layer in progress
-- [ ] Gold layer pending
+- [x] Bronze layer complete - 8,188 rows ingested
+- [x] Silver layer complete - Cleaned and Transformed
+- [x] Gold layer complete - 6142 rows
 - [ ] ML prediction model pending
 - [ ] Genie setup pending
 
