@@ -200,10 +200,9 @@ querying.
 - [x] Bronze layer complete - 8,188 rows ingested
 - [x] Silver layer complete - Cleaned and Transformed
 - [x] Gold layer complete - 6142 rows
-- [ ] ML prediction model pending
-- [ ] Genie setup pending
+- [x] Genie setup complete
 
 ---
 
 ## Author
-GitHub: your-github-tomfatoke
+GitHub: tomfatoke
